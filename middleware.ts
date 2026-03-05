@@ -1,38 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
+// Simple middleware to redirect root to login/feed
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
-
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-
-  if (error) {
-    console.error('middleware supabase error', error);
-  }
-
   const { pathname } = req.nextUrl;
 
-  // allow public auth routes and static files
+  // allow static assets and public pages
   if (
-    pathname.startsWith('/(auth)') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon.ico') ||
-    pathname.includes('.') // file ext
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
+    pathname === '/'
   ) {
-    return res;
+    return NextResponse.next();
   }
 
-  if (!session) {
-    const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = '/login';
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  return res;
+  // For protected routes, auth check happens on client-side via useEffect
+  // Vercel/Firebase can't easily check auth in middleware
+  return NextResponse.next();
 }
 
 export const config = {

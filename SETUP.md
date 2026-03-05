@@ -1,200 +1,288 @@
-# Blog Platform - Quick Setup Guide
+# 🚀 Blog Platform - Firebase Setup Guide
 
-## Prerequisites
-- Node.js 18+
-- npm or yarn
-- Supabase account
+## Overview
+Full-stack blog platform with:
+- **Next.js 14** (Frontend)
+- **Firebase Firestore** (Database)
+- **Firebase Auth** (Authentication)
+- **Vercel** (Hosting)
+- **Tailwind CSS** (Styling)
 
-## Environment Setup
+All completely **FREE** tier!
 
-### 1. Create `.env.local` in the project root:
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+---
+
+## 1️⃣ Setup Firebase Project
+
+### Create Firebase Project
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Click **"Create Project"**
+3. Name it (e.g., "blog-platform")
+4. Disable Google Analytics (optional)
+5. Click **"Create"** and wait
+
+### Get Web App Config
+1. In Firebase Console, click **"Web"** icon (like `</>`)</span>
+2. Register app name (e.g., "blog-web")
+3. Copy the config code (we'll need this)
+4. Don't click "Continue to console" yet
+
+```javascript
+const firebaseConfig = {
+  apiKey: "AIza...",
+  authDomain: "blog-platform.firebaseapp.com",
+  projectId: "blog-platform",
+  storageBucket: "blog-platform.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abc123def456"
+};
 ```
 
-Get these from Supabase Dashboard → Settings → API
+---
 
-### 2. Install Dependencies
+## 2️⃣ Enable Firestore Database
+
+1. **Firebase Console** → **Build** → **Firestore Database**
+2. Click **"Create Database"**
+3. Select **"Start in test mode"** (development)
+4. Choose region: **us-central1** or closest to you
+5. Click **"Create"**
+
+### Create Collections Manually
+
+In Firestore, create these empty collections (no documents yet):
+
+1. **users**
+2. **posts**
+3. **follows**
+4. **comments**
+
+---
+
+## 3️⃣ Enable Authentication
+
+1. **Firebase Console** → **Build** → **Authentication**
+2. Click **"Get Started"**
+3. Select **"Email/Password"**
+4. Toggle **Enable** → Click **Save**
+
+---
+
+## 4️⃣ Setup Project Locally
+
+### Clone & Install
 ```bash
+git clone https://github.com/HalilUST/deneme123.git
+cd visual
 npm install
 ```
 
-### 3. Setup Supabase Database
+### Create `.env.local`
+Copy Firebase config values into `.env.local`:
 
-Run these SQL commands in Supabase SQL Editor:
-
-**Create tables:**
-```sql
--- users table
-create table if not exists public.users (
-  id          uuid not null primary key default gen_random_uuid(),
-  username    text not null unique,
-  email       text not null unique,
-  avatar_url  text,
-  bio         text,
-  created_at  timestamptz not null default now()
-);
-
--- posts table
-create table if not exists public.posts (
-  id          uuid not null primary key default gen_random_uuid(),
-  user_id     uuid not null references public.users(id) on delete cascade,
-  title       text not null,
-  slug        text not null unique,
-  content     text not null,
-  cover_image text,
-  tags        text[],
-  created_at  timestamptz not null default now()
-);
-
-create index if not exists idx_posts_user_id on public.posts (user_id);
-create index if not exists idx_posts_created_at on public.posts (created_at desc);
-
--- follows table
-create table if not exists public.follows (
-  follower_id  uuid not null references public.users(id) on delete cascade,
-  following_id uuid not null references public.users(id) on delete cascade,
-  created_at   timestamptz not null default now(),
-  primary key (follower_id, following_id)
-);
-
-create index if not exists idx_follows_follower on public.follows (follower_id);
-create index if not exists idx_follows_following on public.follows (following_id);
-
--- comments table
-create table if not exists public.comments (
-  id          uuid not null primary key default gen_random_uuid(),
-  post_id     uuid not null references public.posts(id) on delete cascade,
-  user_id     uuid not null references public.users(id) on delete cascade,
-  content     text not null,
-  created_at  timestamptz not null default now()
-);
-
-create index if not exists idx_comments_post_id on public.comments (post_id);
-create index if not exists idx_comments_user_id on public.comments (user_id);
-
--- likes table
-create table if not exists public.likes (
-  post_id    uuid not null references public.posts(id) on delete cascade,
-  user_id    uuid not null references public.users(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  primary key (post_id, user_id)
-);
-
-create index if not exists idx_likes_post_id on public.likes (post_id);
-create index if not exists idx_likes_user_id on public.likes (user_id);
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=AIza...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=blog-platform.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=blog-platform
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=blog-platform.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abc...
 ```
 
-**Enable RLS (Row Level Security):**
-
-Check `supabase-policies.sql` file in project root and run those SQL commands in Supabase.
-
-## Running the Project
-
-### Development
+### Run Locally
 ```bash
 npm run dev
 ```
+
 Open [http://localhost:3000](http://localhost:3000)
 
-### Build
+---
+
+## 5️⃣ Test the App
+
+1. **Register** at `/register`
+   - Email: `test@example.com`
+   - Password: `password123`
+   - Username: `testuser`
+
+2. **Login** at `/login`
+
+3. **Create Post** at `/dashboard/write`
+   - Title: "My First Post"
+   - Content: "Hello World!"
+
+4. **View Feed** at `/dashboard/feed`
+
+5. **Explore Users** at `/dashboard/explore`
+
+---
+
+## 6️⃣ Deploy to Vercel
+
+### Step 1: Push to GitHub
 ```bash
-npm run build
-npm start
+git add .
+git commit -m "Firebase blog platform"
+git push origin main
 ```
 
-## Project Structure
+### Step 2: Deploy on Vercel
+1. Go to [vercel.com](https://vercel.com)
+2. Login with GitHub
+3. Click **"Add New Project"**
+4. Select your `deneme123` repo
+5. Click **"Import"**
+
+### Step 3: Add Environment Variables
+1. On deployment screen → **Environment Variables**
+2. Add all 6 Firebase values:
+   - NEXT_PUBLIC_FIREBASE_API_KEY
+   - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+   - NEXT_PUBLIC_FIREBASE_PROJECT_ID
+   - NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+   - NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+   - NEXT_PUBLIC_FIREBASE_APP_ID
+
+3. Click **"Deploy"**
+
+🎉 Your site is live! Check the provided URL.
+
+---
+
+## 🔐 Important: Update Firestore Security Rules
+
+For production, go to **Firestore → Rules** and paste:
+
+```firestore
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users to read profiles
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth.uid == userId;
+      allow update, delete: if request.auth.uid == userId;
+    }
+
+    // Posts: public read, auth users can create own
+    match /posts/{postId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.user_id == request.auth.uid;
+      allow update, delete: if request.auth.uid == resource.data.user_id;
+    }
+
+    // Follows: authenticated users can follow/unfollow
+    match /follows/{docId} {
+      allow read: if request.auth != null;
+      allow create, delete: if request.auth.uid == request.resource.data.follower_id;
+    }
+
+    // Comments: public read, auth users can comment
+    match /comments/{commentId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.user_id == request.auth.uid;
+      allow update, delete: if request.auth.uid == resource.data.user_id;
+    }
+  }
+}
+```
+
+Click **"Publish"**.
+
+---
+
+## 📁 Project Structure
 
 ```
 src/
 ├── app/
-│   ├── (auth)/              # Authentication routes
-│   │   ├── login/page.tsx
-│   │   └── register/page.tsx
-│   ├── (dashboard)/         # Protected routes (after login)
-│   │   ├── feed/page.tsx
-│   │   ├── explore/page.tsx
-│   │   ├── write/page.tsx
-│   │   └── profile/[username]/page.tsx
-│   ├── blog/[slug]/         # Blog post view
-│   ├── api/                 # API routes
-│   └── page.tsx             # Redirect to feed/login
-├── components/              # Reusable components
-├── lib/
-│   ├── supabase.ts         # Supabase client setup
-│   ├── auth.ts             # Auth helpers
-│   ├── db.ts               # Database queries
-│   └── types.ts            # TypeScript types
-└── middleware.ts            # Route protection
+│   ├── (auth)/
+│   │   ├── login/
+│   │   └── register/
+│   ├── (dashboard)/
+│   │   ├── feed/
+│   │   ├── explore/
+│   │   ├── write/
+│   │   └── profile/[username]/
+│   ├── blog/[slug]/
+│   └── page.tsx
+├── components/
+│   ├── NavBar.tsx
+│   ├── CommentsSection.tsx
+│   └── PostControls.tsx
+└── lib/
+    ├── firebase.ts        (config)
+    ├── auth.ts            (auth functions)
+    ├── db.ts              (database queries)
+    └── types.ts           (TypeScript types)
 ```
-
-## Features Implemented
-
-✅ **Authentication**
-- Register with email, password, and username
-- Login/Logout
-- Session management with Supabase Auth
-- Protected routes with middleware
-
-✅ **User Profiles**
-- View user profile with bio and avatar
-- Show posts by user
-- Display follower/following counts
-- Follow/unfollow users
-
-✅ **Blog Posts**
-- Create and publish posts
-- Edit and delete your own posts
-- Auto-generated slugs from titles
-- View post details
-
-✅ **Feed**
-- Display posts from followed users
-- Sorted by creation date
-
-✅ **Comments**
-- Add comments to posts
-- View all comments on a post
-
-✅ **Explore**
-- Discover and browse all users
-- Find new content creators
-
-## Important Notes
-
-⚠️ **Not Implemented Yet:**
-- Image uploads
-- Likes system UI
-- Post editing UI (backend ready)
-- Search functionality
-- Tags filtering
-- Email verification
-- Password reset
-
-## Deployment on Vercel
-
-1. Push to GitHub
-2. Go to vercel.com and import the repo
-3. Add environment variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Deploy!
-
-## Troubleshooting
-
-**"Missing Supabase configuration"**  
-→ Check `.env.local` has correct URL and ANON_KEY
-
-**"Cannot find module '@supabase/supabase-js'"**  
-→ Run `npm install` and restart dev server
-
-**RLS errors on mutations**  
-→ Ensure RLS policies are enabled in Supabase SQL Editor
-
-**Auth not persisting**  
-→ Clear browser cookies, check cookie settings in Supabase
 
 ---
 
-For more help, check Supabase docs: https://supabase.com/docs
+## ✨ Features
+
+✅ User Registration & Login  
+✅ Create/Edit/Delete Posts  
+✅ Follow/Unfollow Users  
+✅ Comment on Posts  
+✅ View User Profiles  
+✅ Feed from Followed Users  
+✅ Explore All Users  
+✅ Responsive Design  
+
+---
+
+## 🆘 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "Cannot find module 'firebase'" | Run `npm install` |
+| "Permission denied" errors | Check Firestore Rules (currently test mode) |
+| Register not working | Enable Email/Password in Firebase Auth |
+| Posts not showing | Verify "posts" collection exists in Firestore |
+| Env variables not loading | Restart `npm run dev` after adding `.env.local` |
+
+---
+
+## 🆓 Free Tier Limits
+
+**Firebase Firestore:**
+- 1 GB storage
+- 50,000 reads/day
+- 20,000 writes/day
+- 20,000 deletes/day
+
+**Firebase Auth:**
+- Unlimited free users
+
+**Vercel:**
+- 100 GB bandwidth/month
+- Automatic deployments
+
+This is more than enough for a personal blog!
+
+---
+
+## 📚 Useful Links
+
+- [Firebase Docs](https://firebase.google.com/docs)
+- [Next.js Docs](https://nextjs.org/docs)
+- [Vercel Docs](https://vercel.com/docs)
+- [Tailwind CSS](https://tailwindcss.com)
+
+---
+
+## 🚀 Next Steps
+
+After setup works:
+
+1. Customize styling in `globals.css` and `tailwind.config.js`
+2. Add profile pictures (Firebase Storage)
+3. Implement likes/reactions
+4. Add search functionality
+5. Setup custom domain in Vercel
+6. Add email notifications
+
+---
+
+**Made with ❤️ | Completely Free & Open Source**

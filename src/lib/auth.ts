@@ -1,95 +1,53 @@
-import { supabase, createBrowserClient } from './supabase';
-import type { Session, User } from '@supabase/supabase-js';
+import { auth, db } from './firebase';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-export async function getSession(): Promise<Session | null> {
-  const client = createBrowserClient();
-  const {
-    data: { session },
-    error,
-  } = await client.auth.getSession();
-
-  if (error) {
-    console.error('getSession error', error);
-    return null;
-  }
-
-  return session;
-}
-
-export async function getUser(): Promise<User | null> {
-  const session = await getSession();
-  return session?.user ?? null;
+export async function getUser() {
+  return new Promise<FirebaseUser | null>((resolve) => {
+    onAuthStateChanged(auth, (user) => {
+      resolve(user);
+    });
+  });
 }
 
 export async function signOut() {
-  const client = createBrowserClient();
-  const { error } = await client.auth.signOut();
-  if (error) {
-    console.error('signOut error', error);
-    throw error;
-  }
+  await firebaseSignOut(auth);
 }
 
 export async function signInWithEmail(email: string, password: string) {
-  const client = createBrowserClient();
-  const { data, error } = await client.auth.signInWithPassword({
-    email,
-    password,
-  });
-  if (error) {
-    throw error;
-  }
-  return data;
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  return result.user;
 }
 
-export async function signUpWithEmail(
-  email: string,
-  password: string,
-  options?: { data?: Record<string, any> }
-) {
-  const client = createBrowserClient();
-  const { data, error } = await client.auth.signUp({
-    email,
-    password,
-    options,
-  });
-  if (error) {
-    throw error;
-  }
-  return data;
-}
-
-// register with username and insert into users table
 export async function signUpWithUsername(
   email: string,
   password: string,
   username: string
 ) {
-  // supabase auth user metadata
-  const client = createBrowserClient();
-  const { data, error } = await client.auth.signUp({
+  // Create auth user
+  const userCredential = await createUserWithEmailAndPassword(
+    auth,
     email,
-    password,
-    options: {
-      data: { username },
-    },
-  });
+    password
+  );
+  const uid = userCredential.user.uid;
 
-  if (error) {
-    throw error;
-  }
-
-  // try to insert into `users` table; ignore if conflict
-  const { error: insertError } = await supabase.from('users').insert({
-    id: data.user?.id,
+  // Create user document in Firestore
+  await setDoc(doc(db, 'users', uid), {
+    id: uid,
     username,
     email,
-  }).select();
+    avatar_url: null,
+    bio: '',
+    created_at: new Date(),
+  });
 
-  if (insertError) {
-    console.error('user table insert error', insertError);
-    // don't throw; auth already succeeded
-  }
-
-  return data;
+  return userCredential.user;
 }
+
